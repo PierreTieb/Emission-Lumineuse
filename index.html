@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Entraînement aux conversions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <div class="bg-science" aria-hidden="true"></div>
+
+  <main id="app">
+
+    <section id="screen-home" class="screen active">
+      <div class="home-inner">
+        <h1>Entraînement aux conversions</h1>
+        <p class="subtitle">Choisis ton mode pour commencer</p>
+
+        <div class="mode-group mode-group-tuto">
+          <p class="mode-caption">Pour découvrir la méthode de conversion</p>
+          <button class="diff-card diff-tuto" data-diff="tuto" type="button">
+            <span class="diff-name">Tuto</span>
+            <span class="diff-desc">Un exemple expliqué pas à pas</span>
+          </button>
+        </div>
+
+        <div class="mode-group mode-group-levels">
+          <p class="mode-caption">Pour s'exercer à différents niveaux</p>
+          <div class="levels-row">
+            <button class="diff-card diff-facile" data-diff="facile" type="button">
+              <span class="diff-name">Niveau 1</span>
+              <span class="diff-desc">Unités proches, nombres simples</span>
+            </button>
+            <button class="diff-card diff-moyen" data-diff="moyen" type="button">
+              <span class="diff-name">Niveau 2</span>
+              <span class="diff-desc">Toutes les conversions, avec décimales</span>
+            </button>
+            <button class="diff-card diff-evaluation" data-diff="evaluation" type="button">
+              <span class="diff-name">Évaluation</span>
+              <span class="diff-desc">5 conversions chronométrées</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="mode-group mode-group-custom">
+          <p class="mode-caption">Pour créer et résoudre ses propres conversions</p>
+          <button class="diff-card diff-custom" data-diff="custom" type="button">
+            <span class="diff-name">Custom</span>
+            <span class="diff-desc">Crée ta propre conversion</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section id="screen-exercise" class="screen">
+      <div class="exercise-topbar">
+        <button id="btn-back" class="btn-text" type="button">&larr; Retour</button>
+        <div id="chrono" class="chrono hidden">⏱ <span id="chrono-value">0.0 s</span></div>
+        <div id="score-display" class="chrono hidden">Score : <span id="score-value">0/0</span></div>
+      </div>
+
+      <div class="exercise-card">
+        <p class="exercise-label" id="exercise-label">Convertis :</p>
+        <div class="conversion-stack">
+          <div class="conv-row conv-row-from">
+            <span id="from-value" class="conv-value">12,4</span>
+            <span id="from-unit" class="conv-unit">km</span>
+          </div>
+          <span class="conv-arrow-down">&darr;</span>
+          <div class="conv-row conv-row-to">
+            <input id="answer-input" class="answer-input" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" aria-label="Ta réponse" />
+            <span id="to-unit" class="conv-unit">dm</span>
+          </div>
+        </div>
+
+        <div class="exercise-actions">
+          <button id="btn-hint" class="btn-secondary hidden" type="button">Indice</button>
+          <button id="btn-validate" class="btn-primary" type="button">Valider</button>
+          <button id="btn-next" class="btn-secondary hidden" type="button">Conversion suivante</button>
+        </div>
+
+        <div id="feedback" class="feedback" role="status" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <section id="screen-custom" class="screen">
+      <div class="exercise-topbar">
+        <button id="btn-back-custom" class="btn-text" type="button">&larr; Retour</button>
+      </div>
+
+      <div class="exercise-card custom-card">
+        <p class="exercise-label">Crée ta conversion :</p>
+
+        <div class="custom-line">
+          <div class="custom-pair">
+            <input id="custom-from-value" class="answer-input custom-value-input" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="Valeur" aria-label="Valeur de départ" />
+            <select id="custom-from-unit" class="custom-select" aria-label="Unité de départ">
+              <option value="" disabled selected>Unité...</option>
+            </select>
+          </div>
+
+          <span class="conv-arrow custom-arrow">&rarr;</span>
+
+          <div class="custom-pair">
+            <input id="custom-to-value" class="answer-input custom-value-input" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="Résultat" aria-label="Ta réponse" disabled />
+            <select id="custom-to-unit" class="custom-select" aria-label="Unité d'arrivée" disabled>
+              <option value="" disabled selected>Unité...</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="exercise-actions">
+          <button id="btn-custom-validate" class="btn-primary" type="button" disabled>Valider</button>
+          <button id="btn-custom-solve" class="btn-secondary" type="button" disabled>Résoudre</button>
+        </div>
+
+        <div id="custom-feedback" class="feedback" role="status" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <section id="screen-tuto" class="screen">
+      <div class="exercise-topbar">
+        <button id="btn-back-tuto" class="btn-text" type="button">&larr; Retour</button>
+      </div>
+
+      <div class="exercise-card tuto-card">
+        <div class="conversion-stack">
+          <div class="conv-row conv-row-from">
+            <span id="tuto-from-value" class="conv-value">12,4</span>
+            <span id="tuto-from-unit" class="conv-unit circle-target">mm</span>
+          </div>
+          <span class="conv-arrow-down">&darr;</span>
+          <div class="conv-row conv-row-to">
+            <input id="tuto-answer-input" class="answer-input hidden" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" aria-label="Ta réponse finale" />
+            <span id="tuto-to-unit" class="conv-unit circle-target">m</span>
+          </div>
+        </div>
+
+        <div id="tuto-step-text" class="tuto-step"></div>
+
+        <div class="exercise-actions">
+          <button id="btn-tuto-prev" class="btn-secondary hidden" type="button">Précédent</button>
+          <button id="btn-tuto-next" class="btn-primary" type="button" disabled>Suivant</button>
+          <button id="btn-tuto-validate" class="btn-primary hidden" type="button">Valider</button>
+        </div>
+
+        <div id="tuto-feedback" class="feedback" role="status" aria-live="polite"></div>
+
+        <div id="tuto-success" class="tuto-success hidden">
+          <p class="tuto-success-message">Bravo, maintenant tu peux réessayer un tuto expliqué ou bien aller t'entraîner avec les autres modes de jeu !</p>
+          <div class="recap-actions">
+            <button id="btn-tuto-retry" class="btn-primary" type="button">Réessayer</button>
+            <button id="btn-tuto-home" class="btn-secondary" type="button">Modes de jeu</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="screen-recap" class="screen">
+      <div class="recap-card" id="recap-card">
+        <h2 id="recap-title">Résultats</h2>
+        <p class="recap-score" id="recap-score">Score : 0/5</p>
+        <p class="recap-time" id="recap-time">Temps moyen : 0 s</p>
+        <p class="recap-message" id="recap-message"></p>
+        <div class="recap-actions">
+          <button id="btn-restart" class="btn-primary" type="button">Relancer une série</button>
+          <button id="btn-home" class="btn-secondary" type="button">Choisir une autre difficulté</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="draft-table-wrap" class="draft-wrap hidden">
+      <h3 class="draft-title">Brouillon — tableau de conversion</h3>
+      <div id="draft-table" class="draft-table"></div>
+    </section>
+
+  </main>
+
+  <canvas id="confetti-canvas"></canvas>
+
+  <script src="js/units.js"></script>
+  <script src="js/generator.js"></script>
+  <script src="js/table.js"></script>
+  <script src="js/confetti.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

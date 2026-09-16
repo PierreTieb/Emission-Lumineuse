@@ -3,7 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Spectres Lumineux — Explorer l'émission de lumière</title>
+<title>Spectres Lumineux : explorer l'émission de lumière</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oxanium:wght@500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -25,26 +28,58 @@
     <!-- ===================== ACCUEIL ===================== -->
     <section id="screen-accueil" class="screen actif">
       <p class="intro">
-        Trois façons d'explorer comment la matière émet de la lumière visible — sans la théorie aride, juste en manipulant.
+        Trois façons d'explorer comment la matière émet de la lumière visible, sans la théorie aride, juste en manipulant.
       </p>
 
       <div class="grille-modes">
 
         <button class="carte-mode carte-jaune" data-mode="corps-chaud">
-          <div class="carte-icone">
-            <div class="orbe-demo"></div>
+          <div class="carte-icone carte-icone-etoile">
+            <svg viewBox="0 0 100 100" width="88" height="88" aria-hidden="true">
+              <defs>
+                <radialGradient id="grad-etoile" cx="35%" cy="30%" r="75%">
+                  <stop offset="0%" stop-color="#fff6da"/>
+                  <stop offset="35%" stop-color="#ffd77a"/>
+                  <stop offset="70%" stop-color="#f2a33c"/>
+                  <stop offset="100%" stop-color="#a83f12"/>
+                </radialGradient>
+              </defs>
+              <g stroke="#f2a33c" stroke-width="3" stroke-linecap="round" opacity="0.6">
+                <line x1="50" y1="2" x2="50" y2="17"/>
+                <line x1="50" y1="83" x2="50" y2="98"/>
+                <line x1="2" y1="50" x2="17" y2="50"/>
+                <line x1="83" y1="50" x2="98" y2="50"/>
+                <line x1="15" y1="15" x2="25" y2="25"/>
+                <line x1="75" y1="75" x2="85" y2="85"/>
+                <line x1="15" y1="85" x2="25" y2="75"/>
+                <line x1="75" y1="25" x2="85" y2="15"/>
+              </g>
+              <circle cx="50" cy="50" r="32" fill="url(#grad-etoile)"/>
+              <g opacity="0.55">
+                <ellipse cx="40" cy="42" rx="7" ry="4.5" fill="#c9631c" opacity="0.35"/>
+                <ellipse cx="59" cy="56" rx="6" ry="4" fill="#c9631c" opacity="0.3"/>
+                <ellipse cx="45" cy="62" rx="4.5" ry="3" fill="#c9631c" opacity="0.3"/>
+                <ellipse cx="61" cy="38" rx="5" ry="3.5" fill="#ffdca0" opacity="0.45"/>
+                <ellipse cx="35" cy="56" rx="4" ry="2.5" fill="#ffdca0" opacity="0.4"/>
+                <ellipse cx="52" cy="30" rx="3.5" ry="2.5" fill="#ffdca0" opacity="0.35"/>
+              </g>
+              <ellipse cx="39" cy="37" rx="10" ry="6.5" fill="#fff8ea" opacity="0.9"/>
+            </svg>
           </div>
           <h2>Corps chaud</h2>
-          <p>Fais chauffer un objet et regarde sa couleur — et son spectre — se transformer.</p>
+          <p>Observer le spectre lumineux d'un corps en fonction de sa température.</p>
         </button>
 
         <button class="carte-mode carte-verte" data-mode="raies">
           <div class="carte-icone">
-            <div class="tube-demo">
-              <span class="tube-verre"></span>
-              <span class="tube-raie r1"></span>
-              <span class="tube-raie r2"></span>
-              <span class="tube-raie r3"></span>
+            <div class="icone-spectre-raies">
+              <span class="raie-fond"></span>
+              <span class="mini-raie" style="left:10%; height:55%; background:#8f6be0; box-shadow:0 0 6px 1px #8f6be0;"></span>
+              <span class="mini-raie" style="left:24%; height:80%; background:#5a8ff2; box-shadow:0 0 7px 1px #5a8ff2;"></span>
+              <span class="mini-raie" style="left:40%; height:40%; background:#4fd0c0; box-shadow:0 0 6px 1px #4fd0c0;"></span>
+              <span class="mini-raie" style="left:55%; height:95%; background:#f0c93c; box-shadow:0 0 8px 1px #f0c93c;"></span>
+              <span class="mini-raie" style="left:70%; height:60%; background:#f0a23c; box-shadow:0 0 6px 1px #f0a23c;"></span>
+              <span class="mini-raie" style="left:86%; height:75%; background:#e0503c; box-shadow:0 0 7px 1px #e0503c;"></span>
             </div>
           </div>
           <h2>Spectres de raies</h2>
@@ -73,15 +108,15 @@
           <div class="lecture-physique">
             <div class="lecture-ligne">
               <span class="lecture-label">Température</span>
-              <span id="lecture-temperature" class="lecture-valeur">— K</span>
+              <span id="lecture-temperature" class="lecture-valeur">...</span>
             </div>
             <div class="lecture-ligne">
               <span class="lecture-label">Couleur perçue</span>
-              <span id="lecture-couleur" class="lecture-valeur">—</span>
+              <span id="lecture-couleur" class="lecture-valeur">...</span>
             </div>
             <div class="lecture-ligne">
               <span class="lecture-label">Pic d'émission (loi de Wien)</span>
-              <span id="lecture-pic" class="lecture-valeur">— nm</span>
+              <span id="lecture-pic" class="lecture-valeur">...</span>
             </div>
           </div>
           <input type="range" id="curseur-temperature" min="1000" max="20000" step="50" value="3000" aria-label="Température du corps en kelvins">
@@ -136,6 +171,7 @@
       </div>
 
       <div class="barre-actions">
+        <button id="btn-vider-raies" class="btn-secondaire">Vider</button>
         <button id="btn-afficher-spectre-raies" class="btn-principal" disabled>Afficher le spectre</button>
       </div>
 
@@ -149,17 +185,16 @@
         <div class="options-defi">
           <label><input type="checkbox" id="option-melange"> Mélange de 2 gaz</label>
         </div>
-        <div id="statut-defi" class="statut-defi"></div>
       </div>
 
-      <div class="mise-en-page-raies">
-        <div class="banc-optique-conteneur">
-          <div id="interrupteur-source-id" class="interrupteur-source hidden">
-            <span>Source blanche</span>
-            <span class="interrupteur allume-fixe"><span class="interrupteur-bille"></span></span>
-          </div>
-          <canvas id="canvas-banc-identification" width="820" height="360"></canvas>
+      <div class="banc-optique-conteneur banc-grand-format">
+        <div id="interrupteur-source-id" class="interrupteur-source hidden">
+          <span>Source blanche</span>
+          <button id="btn-interrupteur-id" class="interrupteur" aria-pressed="true">
+            <span class="interrupteur-bille"></span>
+          </button>
         </div>
+        <canvas id="canvas-banc-identification" width="960" height="500"></canvas>
       </div>
 
       <div class="barre-actions">
@@ -167,22 +202,23 @@
       </div>
 
       <div id="zone-identification" class="zone-identification hidden">
-        <h3>Quel(s) gaz reconnais-tu ?</h3>
-        <p class="aide-glisser">Clique sur un ou plusieurs flacons pour comparer leur spectre de référence à celui du gaz mystère, puis valide.</p>
+        <h3 id="titre-identification">Quel gaz reconnais-tu ?</h3>
+        <p class="aide-glisser">Clique sur un ou plusieurs flacons pour construire ta réponse, en comparant avec ce qui apparaît sur l'écran du schéma ci-dessus.</p>
 
         <div class="comparaison-spectres">
           <div class="comparaison-ligne">
-            <span class="comparaison-label">Gaz mystère</span>
-            <canvas id="canvas-spectre-mystere" width="820" height="70"></canvas>
-          </div>
-          <div class="comparaison-ligne">
-            <span class="comparaison-label">Ta sélection</span>
+            <span class="comparaison-label">Ta proposition</span>
             <canvas id="canvas-spectre-selection" width="820" height="70"></canvas>
           </div>
         </div>
 
         <div class="liste-bouteilles liste-bouteilles-choix" id="liste-bouteilles-identification"></div>
-        <button id="btn-valider-identification" class="btn-principal">Valider</button>
+
+        <div class="zone-validation">
+          <button id="btn-valider-identification" class="btn-principal">Valider</button>
+          <div id="confetti-conteneur" class="confetti-conteneur" aria-hidden="true"></div>
+        </div>
+        <div id="statut-defi" class="statut-defi"></div>
       </div>
 
     </section>

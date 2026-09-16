@@ -9,6 +9,7 @@ const ModeIdentification = {
 
   defi: null, // { type, gazIds: [...] }
   selection: new Set(),
+  sourceAllumee: true,
 
   init() {
     this.canvas = document.getElementById('canvas-banc-identification');
@@ -19,17 +20,24 @@ const ModeIdentification = {
     this.statut = document.getElementById('statut-defi');
     this.zoneIdentification = document.getElementById('zone-identification');
     this.listeChoix = document.getElementById('liste-bouteilles-identification');
-    this.canvasMystere = document.getElementById('canvas-spectre-mystere');
     this.canvasSelection = document.getElementById('canvas-spectre-selection');
     this.blocInterrupteur = document.getElementById('interrupteur-source-id');
+    this.btnInterrupteur = document.getElementById('btn-interrupteur-id');
+    this.titreIdentification = document.getElementById('titre-identification');
+    this.confettiConteneur = document.getElementById('confetti-conteneur');
 
     this._construireBibliothequeChoix();
 
     this.btnNouveauDefi.addEventListener('click', () => this._genererDefi());
     this.btnIdentifier.addEventListener('click', () => this._passerEnIdentification());
     this.btnValider.addEventListener('click', () => this._valider());
+    this.btnInterrupteur.addEventListener('click', () => {
+      this.sourceAllumee = !this.sourceAllumee;
+      this.btnInterrupteur.setAttribute('aria-pressed', String(this.sourceAllumee));
+      this._redessinerTout();
+    });
 
-    window.addEventListener('resize', () => this._redessinerTout());
+    SceneOptique.observerTaille(this.canvas, () => this._redessinerTout());
   },
 
   onAfficherEcran() {
@@ -66,6 +74,7 @@ const ModeIdentification = {
     }
     this.defi = { type, gazIds };
     this.selection = new Set();
+    this.sourceAllumee = true;
 
     this.zoneIdentification.classList.add('hidden');
     this.statut.textContent = '';
@@ -73,7 +82,10 @@ const ModeIdentification = {
     this.btnIdentifier.disabled = false;
     document.querySelectorAll('#liste-bouteilles-identification .bouteille').forEach(b => b.classList.remove('selectionnee'));
 
+    this.titreIdentification.textContent = nbGaz > 1 ? 'Quels gaz reconnais-tu ?' : 'Quel gaz reconnais-tu ?';
+
     this.blocInterrupteur.classList.toggle('hidden', type !== 'absorption');
+    this.btnInterrupteur.setAttribute('aria-pressed', 'true');
     this._redessinerTout();
   },
 
@@ -84,14 +96,13 @@ const ModeIdentification = {
   _redessinerTout() {
     if (!this.defi) return;
     const gazObjets = this._raiesDuDefi();
-    const raiesFusionnees = [].concat(...gazObjets.map(g => g.raies));
 
     const state = {
       type: this.defi.type,
       inconnu: true,
-      sourceAllumee: true,
-      gazEmission: this.defi.type === 'emission' ? { raies: raiesFusionnees } : null,
-      gazAbsorption: this.defi.type === 'absorption' ? { raies: raiesFusionnees } : null,
+      sourceAllumee: this.sourceAllumee,
+      gazEmission: this.defi.type === 'emission' ? gazObjets : [],
+      gazAbsorption: this.defi.type === 'absorption' ? gazObjets : [],
       survolZone: null
     };
     SceneOptique.dessinerBanc(this.canvas, state);
@@ -128,10 +139,6 @@ const ModeIdentification = {
   },
 
   _redessinerComparaison() {
-    const raiesMystere = [].concat(...this._raiesDuDefi().map(g => g.raies));
-    const { ctx: ctxM, largeur: lM, hauteur: hM } = SceneOptique.ajusterResolution(this.canvasMystere);
-    SceneOptique.dessinerSpectrePlat(ctxM, lM, hM, [{ raies: raiesMystere }], this.defi.type);
-
     const gazSelectionnes = [...this.selection].map(id => DataGaz.parId(id));
     const raiesSelection = [].concat(...gazSelectionnes.map(g => g.raies));
     const { ctx: ctxS, largeur: lS, hauteur: hS } = SceneOptique.ajusterResolution(this.canvasSelection);
@@ -147,9 +154,32 @@ const ModeIdentification = {
       const noms = this._raiesDuDefi().map(g => g.nom).join(' + ');
       this.statut.textContent = `Bravo ! Il s'agissait bien de : ${noms}.`;
       this.statut.className = 'statut-defi succes';
+      this._lancerConfettis();
     } else {
-      this.statut.textContent = `Ce n'est pas encore ça — compare bien les positions des raies, puis réessaie.`;
+      this.statut.textContent = `Ce n'est pas encore ça, compare bien les positions des raies puis réessaie.`;
       this.statut.className = 'statut-defi echec';
     }
+  },
+
+  /** Petite pluie de confettis autour du bouton Valider, en pur CSS/JS. */
+  _lancerConfettis() {
+    if (!this.confettiConteneur) return;
+    this.confettiConteneur.innerHTML = '';
+    const couleurs = ['#93d0a4', '#93bce0', '#e8c874', '#e8927d', '#c9a4e8'];
+    const nb = 28;
+    for (let i = 0; i < nb; i++) {
+      const piece = document.createElement('span');
+      piece.className = 'confetti-piece';
+      piece.style.setProperty('--couleur', couleurs[i % couleurs.length]);
+      piece.style.setProperty('--x', `${(Math.random() * 2 - 1) * 100}px`);
+      piece.style.setProperty('--rotation', `${Math.random() * 360}deg`);
+      piece.style.setProperty('--delai', `${Math.random() * 0.15}s`);
+      piece.style.left = `${40 + Math.random() * 20}%`;
+      this.confettiConteneur.appendChild(piece);
+    }
+    window.clearTimeout(this._confettiTimeout);
+    this._confettiTimeout = window.setTimeout(() => {
+      if (this.confettiConteneur) this.confettiConteneur.innerHTML = '';
+    }, 1300);
   }
 };

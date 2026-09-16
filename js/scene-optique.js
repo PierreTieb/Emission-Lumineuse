@@ -16,9 +16,22 @@ const SceneOptique = {
   LAMBDA_MIN: 380,
   LAMBDA_MAX: 750,
 
-  /** Adapte la résolution interne du canvas à sa taille CSS réelle (netteté). */
+  /**
+   * Adapte la résolution interne du canvas à sa taille CSS réelle (netteté).
+   * IMPORTANT : si l'élément est actuellement caché (écran non affiché),
+   * getBoundingClientRect renvoie 0x0. Il ne faut alors surtout PAS écraser
+   * les attributs width/height du canvas avec 0 : cela détruirait son ratio
+   * intrinsèque utilisé par le CSS (aspect-ratio / height:auto) et la
+   * miniature resterait cassée même une fois l'écran affiché. On se
+   * contente donc de ne rien redimensionner tant qu'on n'a pas une taille
+   * réelle exploitable.
+   */
   ajusterResolution(canvas) {
     const rect = canvas.getBoundingClientRect();
+    const ctx = canvas.getContext('2d');
+    if (rect.width < 2 || rect.height < 2) {
+      return { ctx, largeur: canvas.width, hauteur: canvas.height, pretAffichage: false };
+    }
     const dpr = window.devicePixelRatio || 1;
     const w = Math.round(rect.width * dpr);
     const h = Math.round(rect.height * dpr);
@@ -26,9 +39,25 @@ const SceneOptique = {
       canvas.width = w;
       canvas.height = h;
     }
-    const ctx = canvas.getContext('2d');
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    return { ctx, largeur: rect.width, hauteur: rect.height };
+    return { ctx, largeur: rect.width, hauteur: rect.height, pretAffichage: true };
+  },
+
+  /**
+   * Redessine automatiquement un canvas dès que sa taille réelle change,
+   * y compris lors du passage caché -> affiché (changement d'écran), d'un
+   * redimensionnement de fenêtre ou d'une rotation d'écran. Beaucoup plus
+   * fiable qu'un simple écouteur "resize" de la fenêtre.
+   */
+  observerTaille(canvas, callback) {
+    callback();
+    if (typeof ResizeObserver === 'undefined') {
+      window.addEventListener('resize', callback);
+      return;
+    }
+    const ro = new ResizeObserver(() => callback());
+    ro.observe(canvas);
+    if (canvas.parentElement) ro.observe(canvas.parentElement);
   },
 
   lambdaVersX(lambda, xMin, xMax) {
@@ -125,9 +154,14 @@ const SceneOptique = {
     const xFente = largeur * 0.30;
     const xAbsorption = largeur * 0.46;
     const xPrisme = largeur * 0.62;
-    const xEcran = largeur * 0.94;
+    const xEcran = largeur * 0.90;
 
-    // ---- Zones de dépôt (halo pointillé) ----
+    // Positions (en pixels CSS, alignées sur canvas.offsetX/offsetY) de
+    // chaque gaz actuellement posé sur le banc, pour permettre ensuite de
+    // le glisser hors du schéma afin de le retirer.
+    const zonesGaz = [];
+
+    // ---- Zones de dépôt (halo pointillé, forme allongée) ----
     this._dessinerZoneDepot(ctx, xSource, yMid, state.survolZone === 'source' && state.type === 'emission');
     if (state.type === 'absorption') {
       this._dessinerZoneDepot(ctx, xAbsorption, yMid, state.survolZone === 'absorption');
@@ -139,12 +173,11 @@ const SceneOptique = {
     let estContinu = false;    // vrai si un faisceau blanc continu circule (absorption, lampe allumée)
 
     if (state.type === 'emission') {
-      const gaz = state.gazEmission;
-      if (gaz) {
-        const couleur = this.couleurGlobaleRaies(gaz.raies);
-        this._dessinerTubeGaz(ctx, xSource, yMid, couleur, state.inconnu);
-        couleurFaisceauEntree = couleur;
-        raiesActives = gaz.raies;
+      const gazListe = state.gazEmission || [];
+      if (gazListe.length) {
+        this._dessinerTubesGaz(ctx, xSource, yMid, gazListe, state.inconnu, zonesGaz);
+        raiesActives = [].concat(...gazListe.map(g => g.raies));
+        couleurFaisceauEntree = this.couleurGlobaleRaies(raiesActives);
       } else {
         this._dessinerSupportVide(ctx, xSource, yMid, 'Glisse un gaz ici');
       }
@@ -154,10 +187,10 @@ const SceneOptique = {
         couleurFaisceauEntree = { r: 255, g: 250, b: 240 };
         estContinu = true;
       }
-      const gaz = state.gazAbsorption;
-      if (gaz) {
-        this._dessinerCuveGaz(ctx, xAbsorption, yMid, this.couleurGlobaleRaies(gaz.raies), state.inconnu);
-        raiesActives = gaz.raies; // servira à creuser le faisceau continu
+      const gazListe = state.gazAbsorption || [];
+      if (gazListe.length) {
+        raiesActives = [].concat(...gazListe.map(g => g.raies));
+        this._dessinerCuvesGaz(ctx, xAbsorption, yMid, gazListe, state.inconnu, zonesGaz);
       } else {
         this._dessinerSupportVide(ctx, xAbsorption, yMid, 'Dépose le gaz ici');
       }
@@ -187,15 +220,32 @@ const SceneOptique = {
     } else if (state.type === 'absorption' && estContinu) {
       this._dessinerEventailContinu(ctx, xPrisme, xEcran, yMid, hauteur, raiesActives);
     }
+
+    // Rendu disponible pour le glisser-déposer de retrait (voir mode-spectre-raies.js)
+    canvas._zonesGaz = zonesGaz;
+  },
+
+  /**
+   * Cherche, parmi les gaz actuellement dessinés sur ce banc, celui le plus
+   * proche du point (x, y) en pixels CSS (ex : event.offsetX/offsetY).
+   * Renvoie son identifiant ou null si aucun gaz n'est assez proche.
+   */
+  gazAuPoint(canvas, x, y) {
+    const zones = canvas._zonesGaz || [];
+    for (const z of zones) {
+      const d = Math.hypot(x - z.x, y - z.y);
+      if (d <= z.rayon) return z.id;
+    }
+    return null;
   },
 
   _dessinerZoneDepot(ctx, x, y, survole) {
+    const largeurZone = 150, hauteurZone = 92, rayon = 20;
     ctx.save();
     ctx.strokeStyle = survole ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.16)';
-    ctx.setLineDash([5, 5]);
+    ctx.setLineDash([6, 6]);
     ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.arc(x, y, 36, 0, Math.PI * 2);
+    roundRect(ctx, x - largeurZone / 2, y - hauteurZone / 2, largeurZone, hauteurZone, rayon);
     ctx.stroke();
     ctx.restore();
   },
@@ -205,8 +255,34 @@ const SceneOptique = {
     ctx.fillStyle = 'rgba(255,255,255,0.35)';
     ctx.font = '11px -apple-system, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(texte, x, y + 58);
+    ctx.fillText(texte, x, y + 6);
     ctx.restore();
+  },
+
+  /** Dessine un ou plusieurs tubes de gaz émetteurs, groupés en grappe serrée. */
+  _dessinerTubesGaz(ctx, x, y, gazListe, inconnu, zonesGaz) {
+    const n = gazListe.length;
+    const espace = 22;
+    const xDepart = x - ((n - 1) * espace) / 2;
+    gazListe.forEach((gaz, i) => {
+      const cx = xDepart + i * espace;
+      const couleur = this.couleurGlobaleRaies(gaz.raies);
+      this._dessinerTubeGaz(ctx, cx, y, couleur, inconnu);
+      if (zonesGaz) zonesGaz.push({ id: gaz.id, x: cx, y, rayon: 26 });
+    });
+  },
+
+  /** Dessine une ou plusieurs cuves de gaz absorbant, groupées en grappe serrée. */
+  _dessinerCuvesGaz(ctx, x, y, gazListe, inconnu, zonesGaz) {
+    const n = gazListe.length;
+    const espace = 20;
+    const xDepart = x - ((n - 1) * espace) / 2;
+    gazListe.forEach((gaz, i) => {
+      const cx = xDepart + i * espace;
+      const couleur = this.couleurGlobaleRaies(gaz.raies);
+      this._dessinerCuveGaz(ctx, cx, y, couleur, inconnu);
+      if (zonesGaz) zonesGaz.push({ id: gaz.id, x: cx, y, rayon: 24 });
+    });
   },
 
   _dessinerTubeGaz(ctx, x, y, couleur, inconnu) {
@@ -367,12 +443,16 @@ const SceneOptique = {
       ctx.stroke();
       ctx.restore();
       if (avecImpact) {
+        // La raie apparaît comme un trait HORIZONTAL sur l'écran (et non un
+        // petit rectangle), à l'image de ce qu'on observerait réellement.
         ctx.save();
-        ctx.fillStyle = CouleurUtils.rgbToCss(rgb, 0.85);
+        ctx.fillStyle = CouleurUtils.rgbToCss(rgb, 0.92);
         ctx.shadowColor = CouleurUtils.rgbToCss(rgb, 0.9);
         ctx.shadowBlur = 8;
-        const h = 4 + r.intensite * 10;
-        ctx.fillRect(xEcran - 3, yImpact - h / 2, 8, h);
+        const epaisseur = 2.5 + r.intensite * 3;
+        const longueur = 22 + r.intensite * 12;
+        const epaisseurMur = hauteurCanvas * 0.02 + 4;
+        ctx.fillRect(xEcran + epaisseurMur, yImpact - epaisseur / 2, longueur, epaisseur);
         ctx.restore();
       }
     });
@@ -410,7 +490,7 @@ const SceneOptique = {
       ctx.restore();
       ctx.save();
       ctx.fillStyle = `rgb(${c.r},${c.g},${c.b})`;
-      ctx.fillRect(xEcran - 3, yImpact - 2, 8, 4);
+      ctx.fillRect(xEcran + hauteurCanvas * 0.02 + 4, yImpact - 1.5, 16, 3);
       ctx.restore();
     }
   }

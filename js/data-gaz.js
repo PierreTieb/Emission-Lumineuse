@@ -112,6 +112,41 @@ const DataGaz = {
         { lambda: 599.39, intensite: 0.55 },
         { lambda: 636.35, intensite: 0.30 }
       ]
+    },
+    {
+      id: 'Li',
+      nom: 'Lithium',
+      symbole: 'Li',
+      description: "Raie rouge très intense (670,8 nm) : c'est elle qui donne sa couleur caractéristique au feu d'artifice rouge et au test de flamme du lithium.",
+      couleurGlobale: 'rgb(225, 70, 70)',
+      raies: [
+        { lambda: 670.8, intensite: 1.00, nom: 'Raie rouge principale' },
+        { lambda: 610.4, intensite: 0.15 }
+      ]
+    },
+    {
+      id: 'K',
+      nom: 'Potassium',
+      symbole: 'K',
+      description: "Une raie violette et deux raies rouge profond très proches (766,5 / 769,9 nm) : leur combinaison donne la teinte lilas pâle du test de flamme au potassium.",
+      couleurGlobale: 'rgb(200, 155, 205)',
+      raies: [
+        { lambda: 404.4, intensite: 0.55 },
+        { lambda: 766.5, intensite: 0.85 },
+        { lambda: 769.9, intensite: 0.80 }
+      ]
+    },
+    {
+      id: 'Ba',
+      nom: 'Baryum',
+      symbole: 'Ba',
+      description: "Raies de l'ion baryum dans le bleu et le bleu-vert : une signature nette et bien différente des autres gaz de la bibliothèque.",
+      couleurGlobale: 'rgb(110, 170, 205)',
+      raies: [
+        { lambda: 455.4, intensite: 1.00, nom: 'Raie bleue principale' },
+        { lambda: 493.4, intensite: 0.55 },
+        { lambda: 553.5, intensite: 0.35 }
+      ]
     }
   ],
 

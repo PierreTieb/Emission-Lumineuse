@@ -15,8 +15,7 @@ const ModeCorpsChaud = {
     this.canvas = document.getElementById('canvas-spectre-corps');
 
     this.curseur.addEventListener('input', () => this.mettreAJour());
-    window.addEventListener('resize', () => this.mettreAJour());
-    this.mettreAJour();
+    SceneOptique.observerTaille(this.canvas, () => this.mettreAJour());
   },
 
   mettreAJour() {

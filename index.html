@@ -1,191 +1,214 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Entraînement aux conversions</title>
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="style.css" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spectres Lumineux — Explorer l'émission de lumière</title>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <div class="bg-science" aria-hidden="true"></div>
+<div id="app">
 
-  <main id="app">
+  <!-- ===================== EN-TÊTE ===================== -->
+  <header id="entete">
+    <button id="btn-retour" class="btn-retour hidden" aria-label="Retour à l'accueil">
+      <svg viewBox="0 0 24 24" width="20" height="20"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Accueil
+    </button>
+    <h1 id="titre-ecran">Spectres Lumineux</h1>
+    <div class="entete-spacer" aria-hidden="true"></div>
+  </header>
 
-    <section id="screen-home" class="screen active">
-      <div class="home-inner">
-        <h1>Entraînement aux conversions</h1>
-        <p class="subtitle">Choisis ton mode pour commencer</p>
+  <main id="contenu">
 
-        <div class="mode-group mode-group-tuto">
-          <p class="mode-caption">Pour découvrir la méthode de conversion</p>
-          <button class="diff-card diff-tuto" data-diff="tuto" type="button">
-            <span class="diff-name">Tuto</span>
-            <span class="diff-desc">Un exemple expliqué pas à pas</span>
-          </button>
+    <!-- ===================== ACCUEIL ===================== -->
+    <section id="screen-accueil" class="screen actif">
+      <p class="intro">
+        Trois façons d'explorer comment la matière émet de la lumière visible — sans la théorie aride, juste en manipulant.
+      </p>
+
+      <div class="grille-modes">
+
+        <button class="carte-mode carte-jaune" data-mode="corps-chaud">
+          <div class="carte-icone">
+            <div class="orbe-demo"></div>
+          </div>
+          <h2>Corps chaud</h2>
+          <p>Fais chauffer un objet et regarde sa couleur — et son spectre — se transformer.</p>
+        </button>
+
+        <button class="carte-mode carte-verte" data-mode="raies">
+          <div class="carte-icone">
+            <div class="tube-demo">
+              <span class="tube-verre"></span>
+              <span class="tube-raie r1"></span>
+              <span class="tube-raie r2"></span>
+              <span class="tube-raie r3"></span>
+            </div>
+          </div>
+          <h2>Spectres de raies</h2>
+          <p>Choisis un gaz, observe sa signature lumineuse en émission ou en absorption.</p>
+        </button>
+
+        <button class="carte-mode carte-bleue" data-mode="identification">
+          <div class="carte-icone">
+            <div class="bouteille-mystere">?</div>
+          </div>
+          <h2>Identifier un gaz</h2>
+          <p>Un gaz mystère émet ou absorbe de la lumière. Retrouve lequel grâce à son spectre.</p>
+        </button>
+
+      </div>
+    </section>
+
+    <!-- ===================== MODE 1 : CORPS CHAUD ===================== -->
+    <section id="screen-corps-chaud" class="screen mode-jaune">
+      <div class="panneau-double">
+
+        <div class="panneau panneau-visuel">
+          <div class="scene-corps">
+            <div id="orbe-corps" class="orbe-corps"></div>
+          </div>
+          <div class="lecture-physique">
+            <div class="lecture-ligne">
+              <span class="lecture-label">Température</span>
+              <span id="lecture-temperature" class="lecture-valeur">— K</span>
+            </div>
+            <div class="lecture-ligne">
+              <span class="lecture-label">Couleur perçue</span>
+              <span id="lecture-couleur" class="lecture-valeur">—</span>
+            </div>
+            <div class="lecture-ligne">
+              <span class="lecture-label">Pic d'émission (loi de Wien)</span>
+              <span id="lecture-pic" class="lecture-valeur">— nm</span>
+            </div>
+          </div>
+          <input type="range" id="curseur-temperature" min="1000" max="20000" step="50" value="3000" aria-label="Température du corps en kelvins">
+          <div class="curseur-graduations">
+            <span>1000 K</span><span>5800 K (Soleil)</span><span>20000 K</span>
+          </div>
         </div>
 
-        <div class="mode-group mode-group-levels">
-          <p class="mode-caption">Pour s'exercer à différents niveaux</p>
-          <div class="levels-row">
-            <button class="diff-card diff-facile" data-diff="facile" type="button">
-              <span class="diff-name">Niveau 1</span>
-              <span class="diff-desc">Unités proches, nombres simples</span>
+        <div class="panneau panneau-spectre">
+          <h3>Spectre continu émis (visible)</h3>
+          <canvas id="canvas-spectre-corps" width="640" height="220"></canvas>
+          <div class="axe-longueurs-donde">
+            <span>380 nm</span><span>violet</span><span>vert</span><span>rouge</span><span>780 nm</span>
+          </div>
+          <p class="note-pedago">
+            La hauteur de la courbe est normalisée à son propre maximum pour chaque température :
+            on visualise ainsi la <em>forme</em> du spectre (quelles couleurs dominent), pas la puissance
+            totale émise, qui varie de plusieurs ordres de grandeur avec la température (loi de Stefan-Boltzmann).
+          </p>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ===================== MODE 2 : SPECTRE DE RAIES ===================== -->
+    <section id="screen-raies" class="screen mode-verte">
+
+      <div class="bascule-emission-absorption" role="tablist">
+        <button class="bascule-btn actif" data-type="emission" role="tab">Spectre d'émission</button>
+        <button class="bascule-btn" data-type="absorption" role="tab">Spectre d'absorption</button>
+      </div>
+
+      <div class="mise-en-page-raies">
+
+        <aside class="bibliotheque" id="bibliotheque-raies" aria-label="Bibliothèque de gaz">
+          <h3>Bibliothèque de gaz</h3>
+          <p class="aide-glisser">Glisse un gaz sur la fente pour l'installer.</p>
+          <div class="liste-bouteilles" id="liste-bouteilles-raies"></div>
+        </aside>
+
+        <div class="banc-optique-conteneur">
+          <div id="interrupteur-source" class="interrupteur-source hidden">
+            <span>Source blanche</span>
+            <button id="btn-interrupteur" class="interrupteur" aria-pressed="false">
+              <span class="interrupteur-bille"></span>
             </button>
-            <button class="diff-card diff-moyen" data-diff="moyen" type="button">
-              <span class="diff-name">Niveau 2</span>
-              <span class="diff-desc">Toutes les conversions, avec décimales</span>
-            </button>
-            <button class="diff-card diff-evaluation" data-diff="evaluation" type="button">
-              <span class="diff-name">Évaluation</span>
-              <span class="diff-desc">5 conversions chronométrées</span>
-            </button>
           </div>
+          <canvas id="canvas-banc-raies" width="820" height="360"></canvas>
+          <p class="aide-glisser aide-mobile">Astuce : le gaz se dépose dans l'encoche prévue sur le trajet du faisceau.</p>
         </div>
 
-        <div class="mode-group mode-group-custom">
-          <p class="mode-caption">Pour créer et résoudre ses propres conversions</p>
-          <button class="diff-card diff-custom" data-diff="custom" type="button">
-            <span class="diff-name">Custom</span>
-            <span class="diff-desc">Crée ta propre conversion</span>
-          </button>
-        </div>
       </div>
+
+      <div class="barre-actions">
+        <button id="btn-afficher-spectre-raies" class="btn-principal" disabled>Afficher le spectre</button>
+      </div>
+
     </section>
 
-    <section id="screen-exercise" class="screen">
-      <div class="exercise-topbar">
-        <button id="btn-back" class="btn-text" type="button">&larr; Retour</button>
-        <div id="chrono" class="chrono hidden">⏱ <span id="chrono-value">0.0 s</span></div>
-        <div id="score-display" class="chrono hidden">Score : <span id="score-value">0/0</span></div>
-      </div>
+    <!-- ===================== MODE 3 : IDENTIFICATION ===================== -->
+    <section id="screen-identification" class="screen mode-bleue">
 
-      <div class="exercise-card">
-        <p class="exercise-label" id="exercise-label">Convertis :</p>
-        <div class="conversion-stack">
-          <div class="conv-row conv-row-from">
-            <span id="from-value" class="conv-value">12,4</span>
-            <span id="from-unit" class="conv-unit">km</span>
-          </div>
-          <span class="conv-arrow-down">&darr;</span>
-          <div class="conv-row conv-row-to">
-            <input id="answer-input" class="answer-input" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" aria-label="Ta réponse" />
-            <span id="to-unit" class="conv-unit">dm</span>
-          </div>
+      <div class="barre-defi">
+        <button id="btn-nouveau-defi" class="btn-principal">Nouveau défi</button>
+        <div class="options-defi">
+          <label><input type="checkbox" id="option-melange"> Mélange de 2 gaz</label>
         </div>
-
-        <div class="exercise-actions">
-          <button id="btn-hint" class="btn-secondary hidden" type="button">Indice</button>
-          <button id="btn-validate" class="btn-primary" type="button">Valider</button>
-          <button id="btn-next" class="btn-secondary hidden" type="button">Conversion suivante</button>
-        </div>
-
-        <div id="feedback" class="feedback" role="status" aria-live="polite"></div>
-      </div>
-    </section>
-
-    <section id="screen-custom" class="screen">
-      <div class="exercise-topbar">
-        <button id="btn-back-custom" class="btn-text" type="button">&larr; Retour</button>
+        <div id="statut-defi" class="statut-defi"></div>
       </div>
 
-      <div class="exercise-card custom-card">
-        <p class="exercise-label">Crée ta conversion :</p>
-
-        <div class="custom-line">
-          <div class="custom-pair">
-            <input id="custom-from-value" class="answer-input custom-value-input" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="Valeur" aria-label="Valeur de départ" />
-            <select id="custom-from-unit" class="custom-select" aria-label="Unité de départ">
-              <option value="" disabled selected>Unité...</option>
-            </select>
+      <div class="mise-en-page-raies">
+        <div class="banc-optique-conteneur">
+          <div id="interrupteur-source-id" class="interrupteur-source hidden">
+            <span>Source blanche</span>
+            <span class="interrupteur allume-fixe"><span class="interrupteur-bille"></span></span>
           </div>
+          <canvas id="canvas-banc-identification" width="820" height="360"></canvas>
+        </div>
+      </div>
 
-          <span class="conv-arrow custom-arrow">&rarr;</span>
+      <div class="barre-actions">
+        <button id="btn-identifier" class="btn-principal" disabled>Identifier</button>
+      </div>
 
-          <div class="custom-pair">
-            <input id="custom-to-value" class="answer-input custom-value-input" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="Résultat" aria-label="Ta réponse" disabled />
-            <select id="custom-to-unit" class="custom-select" aria-label="Unité d'arrivée" disabled>
-              <option value="" disabled selected>Unité...</option>
-            </select>
+      <div id="zone-identification" class="zone-identification hidden">
+        <h3>Quel(s) gaz reconnais-tu ?</h3>
+        <p class="aide-glisser">Clique sur un ou plusieurs flacons pour comparer leur spectre de référence à celui du gaz mystère, puis valide.</p>
+
+        <div class="comparaison-spectres">
+          <div class="comparaison-ligne">
+            <span class="comparaison-label">Gaz mystère</span>
+            <canvas id="canvas-spectre-mystere" width="820" height="70"></canvas>
+          </div>
+          <div class="comparaison-ligne">
+            <span class="comparaison-label">Ta sélection</span>
+            <canvas id="canvas-spectre-selection" width="820" height="70"></canvas>
           </div>
         </div>
 
-        <div class="exercise-actions">
-          <button id="btn-custom-validate" class="btn-primary" type="button" disabled>Valider</button>
-          <button id="btn-custom-solve" class="btn-secondary" type="button" disabled>Résoudre</button>
-        </div>
-
-        <div id="custom-feedback" class="feedback" role="status" aria-live="polite"></div>
-      </div>
-    </section>
-
-    <section id="screen-tuto" class="screen">
-      <div class="exercise-topbar">
-        <button id="btn-back-tuto" class="btn-text" type="button">&larr; Retour</button>
+        <div class="liste-bouteilles liste-bouteilles-choix" id="liste-bouteilles-identification"></div>
+        <button id="btn-valider-identification" class="btn-principal">Valider</button>
       </div>
 
-      <div class="exercise-card tuto-card">
-        <div class="conversion-stack">
-          <div class="conv-row conv-row-from">
-            <span id="tuto-from-value" class="conv-value">12,4</span>
-            <span id="tuto-from-unit" class="conv-unit circle-target">mm</span>
-          </div>
-          <span class="conv-arrow-down">&darr;</span>
-          <div class="conv-row conv-row-to">
-            <input id="tuto-answer-input" class="answer-input hidden" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" aria-label="Ta réponse finale" />
-            <span id="tuto-to-unit" class="conv-unit circle-target">m</span>
-          </div>
-        </div>
-
-        <div id="tuto-step-text" class="tuto-step"></div>
-
-        <div class="exercise-actions">
-          <button id="btn-tuto-prev" class="btn-secondary hidden" type="button">Précédent</button>
-          <button id="btn-tuto-next" class="btn-primary" type="button" disabled>Suivant</button>
-          <button id="btn-tuto-validate" class="btn-primary hidden" type="button">Valider</button>
-        </div>
-
-        <div id="tuto-feedback" class="feedback" role="status" aria-live="polite"></div>
-
-        <div id="tuto-success" class="tuto-success hidden">
-          <p class="tuto-success-message">Bravo, maintenant tu peux réessayer un tuto expliqué ou bien aller t'entraîner avec les autres modes de jeu !</p>
-          <div class="recap-actions">
-            <button id="btn-tuto-retry" class="btn-primary" type="button">Réessayer</button>
-            <button id="btn-tuto-home" class="btn-secondary" type="button">Modes de jeu</button>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section id="screen-recap" class="screen">
-      <div class="recap-card" id="recap-card">
-        <h2 id="recap-title">Résultats</h2>
-        <p class="recap-score" id="recap-score">Score : 0/5</p>
-        <p class="recap-time" id="recap-time">Temps moyen : 0 s</p>
-        <p class="recap-message" id="recap-message"></p>
-        <div class="recap-actions">
-          <button id="btn-restart" class="btn-primary" type="button">Relancer une série</button>
-          <button id="btn-home" class="btn-secondary" type="button">Choisir une autre difficulté</button>
-        </div>
-      </div>
-    </section>
-
-    <section id="draft-table-wrap" class="draft-wrap hidden">
-      <h3 class="draft-title">Brouillon — tableau de conversion</h3>
-      <div id="draft-table" class="draft-table"></div>
     </section>
 
   </main>
+</div>
 
-  <canvas id="confetti-canvas"></canvas>
+<!-- ===================== MODALE : SPECTRE EN GRAND ===================== -->
+<div id="modal-spectre" class="modal hidden">
+  <div class="modal-contenu">
+    <button id="btn-fermer-modal" class="btn-fermer" aria-label="Fermer">×</button>
+    <h3 id="modal-titre">Spectre observé</h3>
+    <canvas id="canvas-modal-spectre" width="900" height="200"></canvas>
+    <div class="axe-longueurs-donde">
+      <span>380 nm</span><span>violet</span><span>vert</span><span>rouge</span><span>780 nm</span>
+    </div>
+  </div>
+</div>
 
-  <script src="js/units.js"></script>
-  <script src="js/generator.js"></script>
-  <script src="js/table.js"></script>
-  <script src="js/confetti.js"></script>
-  <script src="js/app.js"></script>
+<script src="js/data-gaz.js"></script>
+<script src="js/couleur-utils.js"></script>
+<script src="js/physique-corps-chaud.js"></script>
+<script src="js/scene-optique.js"></script>
+<script src="js/mode-corps-chaud.js"></script>
+<script src="js/mode-spectre-raies.js"></script>
+<script src="js/mode-identification.js"></script>
+<script src="js/main.js"></script>
 </body>
 </html>

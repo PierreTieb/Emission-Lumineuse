@@ -334,6 +334,20 @@ button { font-family: inherit; font-weight: 600; }
   background: rgba(147, 208, 164, 0.08);
 }
 .bibliotheque h3 { font-size: 0.95rem; margin-bottom: 6px; }
+
+/* ---- Flacon "fantôme" qui suit le doigt/curseur pendant un glisser ---- */
+.fantome-glisser {
+  position: fixed;
+  top: 0; left: 0;
+  transform: translate(-50%, -50%) scale(1.1);
+  pointer-events: none;
+  z-index: 999;
+  opacity: 0.9;
+  filter: drop-shadow(0 6px 14px rgba(0,0,0,0.5));
+}
+/* Pendant un glisser : on bloque le scroll et la sélection de texte sur
+   toute la page pour que le doigt/curseur ne fasse que déplacer le gaz. */
+body.glisser-actif { touch-action: none; user-select: none; overscroll-behavior: none; }
 .aide-glisser { font-size: 0.78rem; color: var(--encre-douce); margin: 0 0 12px; line-height: 1.4; }
 
 .liste-bouteilles {
@@ -350,6 +364,7 @@ button { font-family: inherit; font-weight: 600; }
   gap: 6px;
   cursor: grab;
   user-select: none;
+  touch-action: none;
   border: none;
   background: none;
   padding: 8px 2px;

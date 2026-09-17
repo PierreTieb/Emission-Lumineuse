@@ -156,15 +156,20 @@ const SceneOptique = {
     const xPrisme = largeur * 0.62;
     const xEcran = largeur * 0.90;
 
+    // Échelle utilisée pour les éléments à taille "fixe" (zone de dépôt,
+    // tubes...) afin qu'ils rétrécissent sur un canvas étroit (mobile en
+    // portrait) plutôt que de déborder du cadre.
+    const echelle = Math.min(1, largeur / 700);
+
     // Positions (en pixels CSS, alignées sur canvas.offsetX/offsetY) de
     // chaque gaz actuellement posé sur le banc, pour permettre ensuite de
     // le glisser hors du schéma afin de le retirer.
     const zonesGaz = [];
 
     // ---- Zones de dépôt (halo pointillé, forme allongée) ----
-    this._dessinerZoneDepot(ctx, xSource, yMid, state.survolZone === 'source' && state.type === 'emission');
+    this._dessinerZoneDepot(ctx, xSource, yMid, state.survolZone === 'source' && state.type === 'emission', largeur);
     if (state.type === 'absorption') {
-      this._dessinerZoneDepot(ctx, xAbsorption, yMid, state.survolZone === 'absorption');
+      this._dessinerZoneDepot(ctx, xAbsorption, yMid, state.survolZone === 'absorption', largeur);
     }
 
     // ---- Source ----
@@ -175,7 +180,7 @@ const SceneOptique = {
     if (state.type === 'emission') {
       const gazListe = state.gazEmission || [];
       if (gazListe.length) {
-        this._dessinerTubesGaz(ctx, xSource, yMid, gazListe, state.inconnu, zonesGaz);
+        this._dessinerTubesGaz(ctx, xSource, yMid, gazListe, state.inconnu, zonesGaz, echelle);
         raiesActives = [].concat(...gazListe.map(g => g.raies));
         couleurFaisceauEntree = this.couleurGlobaleRaies(raiesActives);
       } else {
@@ -190,7 +195,7 @@ const SceneOptique = {
       const gazListe = state.gazAbsorption || [];
       if (gazListe.length) {
         raiesActives = [].concat(...gazListe.map(g => g.raies));
-        this._dessinerCuvesGaz(ctx, xAbsorption, yMid, gazListe, state.inconnu, zonesGaz);
+        this._dessinerCuvesGaz(ctx, xAbsorption, yMid, gazListe, state.inconnu, zonesGaz, echelle);
       } else {
         this._dessinerSupportVide(ctx, xAbsorption, yMid, 'Dépose le gaz ici');
       }
@@ -216,9 +221,9 @@ const SceneOptique = {
 
     // ---- Faisceau décomposé après le prisme ----
     if (state.type === 'emission' && raiesActives) {
-      this._dessinerEventailRaies(ctx, xPrisme, xEcran, yMid, hauteur, raiesActives, true);
+      this._dessinerEventailRaies(ctx, xPrisme, xEcran, yMid, hauteur, largeur, raiesActives, true);
     } else if (state.type === 'absorption' && estContinu) {
-      this._dessinerEventailContinu(ctx, xPrisme, xEcran, yMid, hauteur, raiesActives);
+      this._dessinerEventailContinu(ctx, xPrisme, xEcran, yMid, hauteur, largeur, raiesActives);
     }
 
     // Rendu disponible pour le glisser-déposer de retrait (voir mode-spectre-raies.js)
@@ -239,13 +244,19 @@ const SceneOptique = {
     return null;
   },
 
-  _dessinerZoneDepot(ctx, x, y, survole) {
-    const largeurZone = 150, hauteurZone = 92, rayon = 20;
+  _dessinerZoneDepot(ctx, x, y, survole, largeurCanvas) {
+    const largeurZone = Math.min(150, largeurCanvas * 0.4);
+    const hauteurZone = Math.min(92, largeurCanvas * 0.26);
+    const rayon = Math.min(18, hauteurZone * 0.22);
+    // On garde le centre demandé, mais on s'assure que le rectangle reste
+    // entièrement dans le canvas (jamais tronqué sur les bords, même quand
+    // la source est proche du bord gauche sur un canvas très étroit).
+    const cx = Math.max(largeurZone / 2 + 4, Math.min(x, largeurCanvas - largeurZone / 2 - 4));
     ctx.save();
     ctx.strokeStyle = survole ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.16)';
     ctx.setLineDash([6, 6]);
     ctx.lineWidth = 2;
-    roundRect(ctx, x - largeurZone / 2, y - hauteurZone / 2, largeurZone, hauteurZone, rayon);
+    roundRect(ctx, cx - largeurZone / 2, y - hauteurZone / 2, largeurZone, hauteurZone, rayon);
     ctx.stroke();
     ctx.restore();
   },
@@ -260,70 +271,71 @@ const SceneOptique = {
   },
 
   /** Dessine un ou plusieurs tubes de gaz émetteurs, groupés en grappe serrée. */
-  _dessinerTubesGaz(ctx, x, y, gazListe, inconnu, zonesGaz) {
+  _dessinerTubesGaz(ctx, x, y, gazListe, inconnu, zonesGaz, echelle = 1) {
+    const e = Math.max(0.55, echelle);
     const n = gazListe.length;
-    const espace = 22;
+    const espace = 22 * e;
     const xDepart = x - ((n - 1) * espace) / 2;
     gazListe.forEach((gaz, i) => {
       const cx = xDepart + i * espace;
       const couleur = this.couleurGlobaleRaies(gaz.raies);
-      this._dessinerTubeGaz(ctx, cx, y, couleur, inconnu);
-      if (zonesGaz) zonesGaz.push({ id: gaz.id, x: cx, y, rayon: 26 });
+      this._dessinerTubeGaz(ctx, cx, y, couleur, inconnu, e);
+      if (zonesGaz) zonesGaz.push({ id: gaz.id, x: cx, y, rayon: 26 * e });
     });
   },
 
   /** Dessine une ou plusieurs cuves de gaz absorbant, groupées en grappe serrée. */
-  _dessinerCuvesGaz(ctx, x, y, gazListe, inconnu, zonesGaz) {
+  _dessinerCuvesGaz(ctx, x, y, gazListe, inconnu, zonesGaz, echelle = 1) {
+    const e = Math.max(0.55, echelle);
     const n = gazListe.length;
-    const espace = 20;
+    const espace = 20 * e;
     const xDepart = x - ((n - 1) * espace) / 2;
     gazListe.forEach((gaz, i) => {
       const cx = xDepart + i * espace;
       const couleur = this.couleurGlobaleRaies(gaz.raies);
-      this._dessinerCuveGaz(ctx, cx, y, couleur, inconnu);
-      if (zonesGaz) zonesGaz.push({ id: gaz.id, x: cx, y, rayon: 24 });
+      this._dessinerCuveGaz(ctx, cx, y, couleur, inconnu, e);
+      if (zonesGaz) zonesGaz.push({ id: gaz.id, x: cx, y, rayon: 24 * e });
     });
   },
 
-  _dessinerTubeGaz(ctx, x, y, couleur, inconnu) {
+  _dessinerTubeGaz(ctx, x, y, couleur, inconnu, echelle = 1) {
     const c = inconnu ? { r: 190, g: 190, b: 196 } : couleur;
-    const css = `rgb(${c.r},${c.g},${c.b})`;
     ctx.save();
     // lueur
-    const grad = ctx.createRadialGradient(x, y, 2, x, y, 34);
+    const rGlow = 34 * echelle;
+    const grad = ctx.createRadialGradient(x, y, 2, x, y, rGlow);
     grad.addColorStop(0, CouleurUtils.rgbToCss(c, 0.9));
     grad.addColorStop(1, CouleurUtils.rgbToCss(c, 0));
     ctx.fillStyle = grad;
-    ctx.fillRect(x - 34, y - 34, 68, 68);
+    ctx.fillRect(x - rGlow, y - rGlow, rGlow * 2, rGlow * 2);
     // tube
     ctx.fillStyle = '#26282c';
     ctx.strokeStyle = 'rgba(255,255,255,0.25)';
     ctx.lineWidth = 1.5;
-    roundRect(ctx, x - 10, y - 24, 20, 48, 8);
+    roundRect(ctx, x - 10 * echelle, y - 24 * echelle, 20 * echelle, 48 * echelle, 8 * echelle);
     ctx.fill(); ctx.stroke();
-    ctx.fillStyle = css;
-    roundRect(ctx, x - 6, y - 18, 12, 36, 5);
+    ctx.fillStyle = `rgb(${c.r},${c.g},${c.b})`;
+    roundRect(ctx, x - 6 * echelle, y - 18 * echelle, 12 * echelle, 36 * echelle, 5 * echelle);
     ctx.fill();
     if (inconnu) {
       ctx.fillStyle = 'rgba(255,255,255,0.65)';
-      ctx.font = 'bold 12px -apple-system, sans-serif';
+      ctx.font = `bold ${Math.round(12 * echelle)}px -apple-system, sans-serif`;
       ctx.textAlign = 'center';
-      ctx.fillText('?', x, y + 46);
+      ctx.fillText('?', x, y + 46 * echelle);
     }
     ctx.restore();
   },
 
-  _dessinerCuveGaz(ctx, x, y, couleur, inconnu) {
+  _dessinerCuveGaz(ctx, x, y, couleur, inconnu, echelle = 1) {
     const c = inconnu ? { r: 190, g: 190, b: 196 } : couleur;
-    const css = `rgb(${c.r},${c.g},${c.b})`;
     ctx.save();
     ctx.fillStyle = 'rgba(255,255,255,0.06)';
     ctx.strokeStyle = 'rgba(255,255,255,0.3)';
     ctx.lineWidth = 1.5;
-    roundRect(ctx, x - 16, y - 30, 32, 60, 6);
+    roundRect(ctx, x - 16 * echelle, y - 30 * echelle, 32 * echelle, 60 * echelle, 6 * echelle);
     ctx.fill(); ctx.stroke();
     ctx.fillStyle = CouleurUtils.rgbToCss(c, 0.5);
-    ctx.fillRect(x - 14, y - 10, 28, 38);
+    ctx.fillRect(x - 14 * echelle, y - 10 * echelle, 28 * echelle, 38 * echelle);
     ctx.restore();
   },
 
@@ -423,9 +435,13 @@ const SceneOptique = {
    * décalage vertical progressif par raie pour donner une impression de
    * profondeur (vue légèrement de côté), comme demandé.
    */
-  _dessinerEventailRaies(ctx, xPrisme, xEcran, yMid, hauteurCanvas, raies, avecImpact) {
+  _dessinerEventailRaies(ctx, xPrisme, xEcran, yMid, hauteurCanvas, largeurCanvas, raies, avecImpact) {
     const yHautEventail = hauteurCanvas * 0.14;
     const yBasEventail = hauteurCanvas * 0.82;
+    const epaisseurMur = hauteurCanvas * 0.02 + 4;
+    // Espace réellement disponible à droite de l'écran : le trait ne doit
+    // jamais dépasser le bord du canvas, quelle que soit sa largeur.
+    const disponible = Math.max(6, largeurCanvas - (xEcran + epaisseurMur) - 4);
     raies.forEach((r, i) => {
       const t = (r.lambda - this.LAMBDA_MIN) / (this.LAMBDA_MAX - this.LAMBDA_MIN);
       // violet dévié plus fort (vers le haut), rouge moins dévié (vers le bas)
@@ -450,8 +466,7 @@ const SceneOptique = {
         ctx.shadowColor = CouleurUtils.rgbToCss(rgb, 0.9);
         ctx.shadowBlur = 8;
         const epaisseur = 2.5 + r.intensite * 3;
-        const longueur = 22 + r.intensite * 12;
-        const epaisseurMur = hauteurCanvas * 0.02 + 4;
+        const longueur = Math.min(22 + r.intensite * 12, disponible);
         ctx.fillRect(xEcran + epaisseurMur, yImpact - epaisseur / 2, longueur, epaisseur);
         ctx.restore();
       }
@@ -459,9 +474,11 @@ const SceneOptique = {
   },
 
   /** Éventail continu (arc-en-ciel) du prisme vers l'écran, creusé si des raies d'absorption sont fournies. */
-  _dessinerEventailContinu(ctx, xPrisme, xEcran, yMid, hauteurCanvas, raiesAbsorbees) {
+  _dessinerEventailContinu(ctx, xPrisme, xEcran, yMid, hauteurCanvas, largeurCanvas, raiesAbsorbees) {
     const yHaut = hauteurCanvas * 0.14;
     const yBas = hauteurCanvas * 0.82;
+    const epaisseurMur = hauteurCanvas * 0.02 + 4;
+    const longueurImpact = Math.min(16, Math.max(4, largeurCanvas - (xEcran + epaisseurMur) - 4));
     const nb = 90;
     for (let i = 0; i < nb; i++) {
       const t = i / (nb - 1);
@@ -490,7 +507,7 @@ const SceneOptique = {
       ctx.restore();
       ctx.save();
       ctx.fillStyle = `rgb(${c.r},${c.g},${c.b})`;
-      ctx.fillRect(xEcran + hauteurCanvas * 0.02 + 4, yImpact - 1.5, 16, 3);
+      ctx.fillRect(xEcran + epaisseurMur, yImpact - 1.5, longueurImpact, 3);
       ctx.restore();
     }
   }

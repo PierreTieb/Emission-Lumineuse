@@ -2,6 +2,11 @@
  * mode-spectre-raies.js
  * Mode "Spectre de raies" : l'utilisateur choisit émission ou absorption,
  * glisse un gaz nommé sur le banc optique, et peut afficher son spectre.
+ *
+ * Le glisser-déposer est géré "à la main" avec les Pointer Events (et non
+ * l'API HTML5 Drag and Drop classique) car cette dernière ne fonctionne pas
+ * au doigt sur la plupart des navigateurs mobiles. Les Pointer Events, eux,
+ * unifient souris, doigt et stylet et fonctionnent partout.
  */
 
 const ModeSpectreRaies = {
@@ -14,6 +19,8 @@ const ModeSpectreRaies = {
     survolZone: null
   },
 
+  drag: null, // { gazId, origine: 'bibliotheque' | 'schema', fantome }
+
   init() {
     this.canvas = document.getElementById('canvas-banc-raies');
     this.bibliotheque = document.getElementById('liste-bouteilles-raies');
@@ -24,9 +31,8 @@ const ModeSpectreRaies = {
 
     this._construireBibliotheque();
     this._attacherBascule();
-    this._attacherDragDrop();
-    this._attacherRetraitVersBibliotheque();
-    this._attacherRetraitDepuisSchema();
+    this._attacherGlisserDepuisSchema();
+    this._attacherSuiviGlobalDuGlisser();
 
     this.btnInterrupteur.addEventListener('click', () => {
       this.state.sourceAllumee = !this.state.sourceAllumee;
@@ -59,7 +65,6 @@ const ModeSpectreRaies = {
     DataGaz.gaz.forEach(gaz => {
       const el = document.createElement('div');
       el.className = 'bouteille';
-      el.draggable = true;
       el.dataset.gazId = gaz.id;
       el.innerHTML = `
         <div class="bouteille-corps">
@@ -67,11 +72,11 @@ const ModeSpectreRaies = {
         </div>
         <div class="bouteille-nom">${gaz.nom}</div>
       `;
-      el.addEventListener('dragstart', (e) => {
-        e.dataTransfer.setData('text/plain', gaz.id);
-        el.classList.add('est-glissee');
+      el.addEventListener('pointerdown', (e) => {
+        if (this.drag) return;
+        e.preventDefault();
+        this._demarrerGlisser(gaz.id, 'bibliotheque', e.clientX, e.clientY);
       });
-      el.addEventListener('dragend', () => el.classList.remove('est-glissee'));
       this.bibliotheque.appendChild(el);
     });
   },
@@ -85,25 +90,23 @@ const ModeSpectreRaies = {
     });
   },
 
-  /**
-   * Permet de saisir un gaz déjà posé sur le schéma (glisser-déposer en
-   * sortie) pour le déplacer, en particulier vers la bibliothèque afin de
-   * le retirer.
-   */
-  _attacherRetraitDepuisSchema() {
-    this.canvas.draggable = true;
-
-    this.canvas.addEventListener('dragstart', (e) => {
+  /** Permet de saisir un gaz déjà posé sur le schéma pour le déplacer (notamment vers la bibliothèque pour le retirer). */
+  _attacherGlisserDepuisSchema() {
+    this.canvas.style.touchAction = 'none';
+    this.canvas.addEventListener('pointerdown', (e) => {
+      if (this.drag) return;
       const rect = this.canvas.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
       const gazId = SceneOptique.gazAuPoint(this.canvas, x, y);
-      if (!gazId) { e.preventDefault(); return; }
-      e.dataTransfer.setData('text/plain', gazId);
-      e.dataTransfer.setData('application/x-origine-schema', gazId);
+      if (!gazId) return;
+      e.preventDefault();
+      this._demarrerGlisser(gazId, 'schema', e.clientX, e.clientY);
     });
 
-    this.canvas.addEventListener('mousemove', (e) => {
+    // Curseur "attrape-moi" quand on survole un gaz déjà posé (souris uniquement).
+    this.canvas.addEventListener('pointermove', (e) => {
+      if (this.drag || e.pointerType !== 'mouse') return;
       const rect = this.canvas.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
@@ -112,30 +115,99 @@ const ModeSpectreRaies = {
     });
   },
 
-  /** La bibliothèque agit aussi comme grande zone de dépôt pour retirer un gaz du schéma. */
-  _attacherRetraitVersBibliotheque() {
-    this.bibliotheque.addEventListener('dragover', (e) => {
-      if (![...e.dataTransfer.types].includes('application/x-origine-schema')) return;
-      e.preventDefault();
-      this.bibliotheque.classList.add('survolee-retrait');
+  /** Démarre un glisser : crée un petit flacon "fantôme" qui suit le doigt/curseur. */
+  _demarrerGlisser(gazId, origine, x, y) {
+    const gaz = DataGaz.parId(gazId);
+    if (!gaz) return;
+    const fantome = document.createElement('div');
+    fantome.className = 'fantome-glisser';
+    fantome.innerHTML = `<div class="bouteille-corps"><div class="bouteille-col" style="background:${gaz.couleurGlobale}"></div></div>`;
+    document.body.appendChild(fantome);
+
+    this.drag = { gazId, origine, fantome };
+    this._positionnerFantome(x, y);
+    document.body.classList.add('glisser-actif');
+  },
+
+  _positionnerFantome(x, y) {
+    if (!this.drag) return;
+    this.drag.fantome.style.left = `${x}px`;
+    this.drag.fantome.style.top = `${y}px`;
+  },
+
+  /**
+   * Écoute globalement les mouvements et le relâchement du pointeur pendant
+   * un glisser, quel que soit l'endroit de l'écran survolé.
+   */
+  _attacherSuiviGlobalDuGlisser() {
+    window.addEventListener('pointermove', (e) => {
+      if (!this.drag) return;
+      this._positionnerFantome(e.clientX, e.clientY);
+
+      const rectCanvas = this.canvas.getBoundingClientRect();
+      const dansCanvas = this._pointDansRect(e.clientX, e.clientY, rectCanvas);
+      this.state.survolZone = dansCanvas
+        ? this._zoneDepuisPoint(e.clientX - rectCanvas.left, e.clientY - rectCanvas.top)
+        : null;
+      this._redessiner();
+
+      const rectBib = this.bibliotheque.getBoundingClientRect();
+      const dansBib = this._pointDansRect(e.clientX, e.clientY, rectBib);
+      this.bibliotheque.classList.toggle('survolee-retrait', dansBib && this.drag.origine === 'schema');
     });
-    this.bibliotheque.addEventListener('dragleave', () => {
-      this.bibliotheque.classList.remove('survolee-retrait');
-    });
-    this.bibliotheque.addEventListener('drop', (e) => {
-      this.bibliotheque.classList.remove('survolee-retrait');
-      if (![...e.dataTransfer.types].includes('application/x-origine-schema')) return;
-      e.preventDefault();
-      const gazId = e.dataTransfer.getData('text/plain');
+
+    window.addEventListener('pointerup', (e) => this._terminerGlisser(e.clientX, e.clientY));
+    window.addEventListener('pointercancel', () => this._annulerGlisser());
+  },
+
+  _pointDansRect(x, y, rect) {
+    return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
+  },
+
+  _terminerGlisser(x, y) {
+    if (!this.drag) return;
+    const { gazId, origine } = this.drag;
+    const gaz = DataGaz.parId(gazId);
+
+    const rectCanvas = this.canvas.getBoundingClientRect();
+    const rectBib = this.bibliotheque.getBoundingClientRect();
+    const dansCanvas = this._pointDansRect(x, y, rectCanvas);
+    const dansBib = this._pointDansRect(x, y, rectBib);
+
+    if (dansCanvas && gaz) {
+      const zone = this._zoneDepuisPoint(x - rectCanvas.left, y - rectCanvas.top);
+      if (this.state.type === 'emission' && zone === 'source') {
+        if (!this.state.gazEmission.some(g => g.id === gaz.id)) this.state.gazEmission.push(gaz);
+      } else if (this.state.type === 'absorption' && zone === 'absorption') {
+        if (!this.state.gazAbsorption.some(g => g.id === gaz.id)) this.state.gazAbsorption.push(gaz);
+      }
+    } else if (dansBib && origine === 'schema') {
       if (this.state.type === 'emission') {
         this.state.gazEmission = this.state.gazEmission.filter(g => g.id !== gazId);
       } else {
         this.state.gazAbsorption = this.state.gazAbsorption.filter(g => g.id !== gazId);
       }
-      this._redessiner();
-      this._mettreAJourBoutonAfficher();
-      this._actualiserBibliotheque();
-    });
+    }
+
+    this._nettoyerGlisser();
+    this._redessiner();
+    this._mettreAJourBoutonAfficher();
+    this._actualiserBibliotheque();
+  },
+
+  _annulerGlisser() {
+    this._nettoyerGlisser();
+    this._redessiner();
+  },
+
+  _nettoyerGlisser() {
+    if (this.drag) {
+      this.drag.fantome.remove();
+      this.drag = null;
+    }
+    this.state.survolZone = null;
+    this.bibliotheque.classList.remove('survolee-retrait');
+    document.body.classList.remove('glisser-actif');
   },
 
   _attacherBascule() {
@@ -157,37 +229,9 @@ const ModeSpectreRaies = {
     this._actualiserBibliotheque();
   },
 
-  _attacherDragDrop() {
-    this.canvas.addEventListener('dragover', (e) => {
-      e.preventDefault();
-      this.state.survolZone = this._zoneSousCurseur(e);
-      this._redessiner();
-    });
-    this.canvas.addEventListener('dragleave', () => {
-      this.state.survolZone = null;
-      this._redessiner();
-    });
-    this.canvas.addEventListener('drop', (e) => {
-      e.preventDefault();
-      const gazId = e.dataTransfer.getData('text/plain');
-      const gaz = DataGaz.parId(gazId);
-      const zone = this._zoneSousCurseur(e);
-      this.state.survolZone = null;
-      if (!gaz) return;
-      if (this.state.type === 'emission' && zone === 'source') {
-        if (!this.state.gazEmission.some(g => g.id === gaz.id)) this.state.gazEmission.push(gaz);
-      } else if (this.state.type === 'absorption' && zone === 'absorption') {
-        if (!this.state.gazAbsorption.some(g => g.id === gaz.id)) this.state.gazAbsorption.push(gaz);
-      }
-      this._redessiner();
-      this._mettreAJourBoutonAfficher();
-      this._actualiserBibliotheque();
-    });
-  },
-
-  _zoneSousCurseur(e) {
+  _zoneDepuisPoint(xPix, yPix) {
     const rect = this.canvas.getBoundingClientRect();
-    const xRel = (e.clientX - rect.left) / rect.width;
+    const xRel = xPix / rect.width;
     if (this.state.type === 'emission') {
       return xRel < 0.22 ? 'source' : null;
     }

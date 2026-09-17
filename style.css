@@ -34,6 +34,7 @@ html, body {
   font-family: -apple-system, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
   font-weight: 500;
   min-height: 100vh;
+  overflow-x: hidden;
 }
 
 h1, h2, h3 {
@@ -63,9 +64,12 @@ button { font-family: inherit; font-weight: 600; }
 }
 
 #entete h1 {
-  font-size: 1.4rem;
+  font-size: 2.1rem;
   flex: 1;
   text-align: center;
+}
+@media (max-width: 640px) {
+  #entete h1 { font-size: 1.6rem; }
 }
 
 .entete-spacer { width: 96px; }
@@ -184,20 +188,10 @@ button { font-family: inherit; font-weight: 600; }
 
 /* ---------------------------- MODE 1 : CORPS CHAUD ---------------------------- */
 
-/* Une fois dans un mode, le titre d'écran doit avoir du poids visuel :
-   nettement plus grand que sur la page d'accueil. */
 .mode-jaune #titre-ecran,
 .mode-verte #titre-ecran,
 .mode-bleue #titre-ecran {
-  font-size: 2.1rem;
   letter-spacing: 0.015em;
-}
-@media (max-width: 640px) {
-  .mode-jaune #titre-ecran,
-  .mode-verte #titre-ecran,
-  .mode-bleue #titre-ecran {
-    font-size: 1.6rem;
-  }
 }
 
 .mode-jaune #titre-ecran { color: var(--jaune); }
@@ -266,6 +260,31 @@ button { font-family: inherit; font-weight: 600; }
   font-size: 0.78rem;
   color: var(--encre-douce);
   margin-top: 6px;
+}
+
+.encart-loi-wien {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid var(--ligne);
+}
+.encart-loi-wien h3 {
+  font-size: 0.95rem;
+  color: var(--jaune);
+  margin-bottom: 8px;
+}
+.encart-loi-wien p {
+  font-size: 0.85rem;
+  line-height: 1.55;
+  color: var(--encre-douce);
+  margin: 0 0 8px;
+}
+.encart-loi-wien p:last-child { margin-bottom: 0; }
+.formule-wien {
+  font-family: 'Oxanium', ui-rounded, sans-serif;
+  font-size: 1.3rem !important;
+  font-weight: 700;
+  color: var(--encre) !important;
+  letter-spacing: 0.02em;
 }
 
 .panneau-spectre h3 { font-size: 1rem; margin-bottom: 14px; color: var(--encre); }
@@ -452,7 +471,7 @@ body.glisser-actif { touch-action: none; user-select: none; overscroll-behavior:
 }
 #canvas-banc-raies {
   width: 100%;
-  aspect-ratio: 820 / 360;
+  aspect-ratio: 820 / 280;
   display: block;
   background: #0e0e10;
   border-radius: var(--rayon-petit);
@@ -514,6 +533,9 @@ body.glisser-actif { touch-action: none; user-select: none; overscroll-behavior:
   flex-wrap: wrap;
   margin-top: 22px;
 }
+.barre-actions-schema {
+  margin-top: 14px;
+}
 
 .btn-secondaire {
   background: none;
@@ -563,25 +585,28 @@ body.glisser-actif { touch-action: none; user-select: none; overscroll-behavior:
 
 .zone-validation { position: relative; display: flex; justify-content: center; }
 .confetti-conteneur {
-  position: absolute;
-  top: 0; left: 0; right: 0; height: 0;
+  position: fixed;
+  top: 0; left: 0;
+  width: 0; height: 0;
   overflow: visible;
   pointer-events: none;
+  z-index: 80;
 }
 .confetti-piece {
   position: absolute;
-  top: -4px;
-  width: 7px; height: 12px;
+  top: -3px; left: -2px;
+  width: 4px; height: 7px;
   background: var(--couleur);
-  border-radius: 2px;
-  opacity: 0.95;
-  transform: translate(0, 0) rotate(0deg);
-  animation: chute-confetti 1.1s ease-in forwards;
+  border-radius: 1px;
+  opacity: 1;
+  transform: translate(0, 0) scale(1) rotate(0deg);
+  animation: eclater-confetti 0.75s cubic-bezier(0.15, 0.8, 0.4, 1) forwards;
   animation-delay: var(--delai);
 }
-@keyframes chute-confetti {
-  0%   { transform: translate(0, 0) rotate(0deg); opacity: 1; }
-  100% { transform: translate(var(--x), 100px) rotate(var(--rotation)); opacity: 0; }
+@keyframes eclater-confetti {
+  0%   { transform: translate(0, 0) scale(1) rotate(0deg); opacity: 1; }
+  65%  { opacity: 1; }
+  100% { transform: translate(var(--x), var(--y)) scale(0.4) rotate(var(--rotation)); opacity: 0; }
 }
 @media (prefers-reduced-motion: reduce) {
   .confetti-piece { animation: none; opacity: 0; }

@@ -76,6 +76,30 @@ const PhysiqueCorpsChaud = {
     return points;
   },
 
+  /** Domaine spectral dans lequel tombe le pic d'émission (loi de Wien). */
+  domainePic(T) {
+    const lambda = this.longueurDondePic(T); // en nm
+    if (lambda > this.LAMBDA_MAX) return 'infrarouge (invisible à l\'œil)';
+    if (lambda < this.LAMBDA_MIN) return 'ultraviolet (invisible à l\'œil)';
+    return 'domaine visible';
+  },
+
+  /**
+   * Comparaison à une étoile réelle de température de surface proche,
+   * pour ancrer la valeur du curseur dans du concret. Températures de
+   * surface approximatives, issues de la classification spectrale usuelle.
+   */
+  comparaisonObjet(T) {
+    if (T < 2700) return 'plus froid qu\'aucune étoile : le domaine des naines brunes';
+    if (T < 3800) return 'Bételgeuse, géante rouge d\'Orion (environ 3500 K)';
+    if (T < 5000) return 'Arcturus, géante orangée du Bouvier (environ 4300 K)';
+    if (T < 6000) return 'le Soleil (environ 5800 K)';
+    if (T < 7600) return 'Procyon, dans le Grand Chien (environ 6500 K)';
+    if (T < 9500) return 'Véga, dans la Lyre (environ 9600 K)';
+    if (T < 12000) return 'Sirius, l\'étoile la plus brillante du ciel nocturne (environ 9900 K)';
+    return 'Rigel, supergéante bleue d\'Orion (12000 K et plus)';
+  },
+
   /** Description qualitative de la couleur pour un texte pédagogique. */
   descriptionCouleur(T) {
     if (T < 1700) return 'rouge sombre';

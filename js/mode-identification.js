@@ -2,7 +2,9 @@
  * mode-identification.js
  * Mode "Identifier un gaz" : un défi est généré aléatoirement (type de
  * spectre + un ou deux gaz cachés), l'utilisateur observe le spectre puis
- * doit retrouver le(s) gaz correspondant(s) dans la bibliothèque.
+ * doit retrouver le(s) gaz correspondant(s) dans la bibliothèque. La zone
+ * de sélection est visible en permanence (pas d'étape "Identifier"
+ * intermédiaire) : on compare directement schéma et propositions.
  */
 
 const ModeIdentification = {
@@ -14,7 +16,6 @@ const ModeIdentification = {
   init() {
     this.canvas = document.getElementById('canvas-banc-identification');
     this.btnNouveauDefi = document.getElementById('btn-nouveau-defi');
-    this.btnIdentifier = document.getElementById('btn-identifier');
     this.btnValider = document.getElementById('btn-valider-identification');
     this.optionMelange = document.getElementById('option-melange');
     this.statut = document.getElementById('statut-defi');
@@ -24,12 +25,12 @@ const ModeIdentification = {
     this.blocInterrupteur = document.getElementById('interrupteur-source-id');
     this.btnInterrupteur = document.getElementById('btn-interrupteur-id');
     this.titreIdentification = document.getElementById('titre-identification');
+    this.aideIdentification = document.getElementById('aide-identification');
     this.confettiConteneur = document.getElementById('confetti-conteneur');
 
     this._construireBibliothequeChoix();
 
     this.btnNouveauDefi.addEventListener('click', () => this._genererDefi());
-    this.btnIdentifier.addEventListener('click', () => this._passerEnIdentification());
     this.btnValider.addEventListener('click', () => this._valider());
     this.btnInterrupteur.addEventListener('click', () => {
       this.sourceAllumee = !this.sourceAllumee;
@@ -74,19 +75,23 @@ const ModeIdentification = {
     }
     this.defi = { type, gazIds };
     this.selection = new Set();
-    this.sourceAllumee = true;
+    // En absorption, la lampe démarre éteinte : il faut l'allumer soi-même
+    // pour voir apparaître le spectre. En émission, elle n'intervient pas.
+    this.sourceAllumee = type !== 'absorption';
 
-    this.zoneIdentification.classList.add('hidden');
     this.statut.textContent = '';
     this.statut.className = 'statut-defi';
-    this.btnIdentifier.disabled = false;
     document.querySelectorAll('#liste-bouteilles-identification .bouteille').forEach(b => b.classList.remove('selectionnee'));
 
     this.titreIdentification.textContent = nbGaz > 1 ? 'Quels gaz reconnais-tu ?' : 'Quel gaz reconnais-tu ?';
+    this.aideIdentification.textContent = nbGaz > 1
+      ? 'Sélectionne les 2 gaz qui composent ce spectre, en comparant avec ce qui apparaît sur l\'écran du schéma ci-dessus.'
+      : 'Sélectionne le gaz qui correspond à ce spectre, en comparant avec ce qui apparaît sur l\'écran du schéma ci-dessus.';
 
     this.blocInterrupteur.classList.toggle('hidden', type !== 'absorption');
-    this.btnInterrupteur.setAttribute('aria-pressed', 'true');
+    this.btnInterrupteur.setAttribute('aria-pressed', String(this.sourceAllumee));
     this._redessinerTout();
+    this._redessinerComparaison();
   },
 
   _raiesDuDefi() {
@@ -106,18 +111,6 @@ const ModeIdentification = {
       survolZone: null
     };
     SceneOptique.dessinerBanc(this.canvas, state);
-
-    if (!this.zoneIdentification.classList.contains('hidden')) {
-      this._redessinerComparaison();
-    }
-  },
-
-  _passerEnIdentification() {
-    this.zoneIdentification.classList.remove('hidden');
-    this._redessinerComparaison();
-    if (typeof this.zoneIdentification.scrollIntoView === 'function') {
-      this.zoneIdentification.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }
   },
 
   _basculerSelection(gazId, el) {
@@ -161,25 +154,38 @@ const ModeIdentification = {
     }
   },
 
-  /** Petite pluie de confettis autour du bouton Valider, en pur CSS/JS. */
+  /**
+   * Explosion de confettis centrée précisément sur le bouton Valider, quelle
+   * que soit sa position réelle à l'écran (calculée à l'instant du clic).
+   */
   _lancerConfettis() {
-    if (!this.confettiConteneur) return;
+    if (!this.confettiConteneur || !this.btnValider) return;
+    const rect = this.btnValider.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    this.confettiConteneur.style.left = `${cx}px`;
+    this.confettiConteneur.style.top = `${cy}px`;
     this.confettiConteneur.innerHTML = '';
-    const couleurs = ['#93d0a4', '#93bce0', '#e8c874', '#e8927d', '#c9a4e8'];
-    const nb = 28;
+
+    const couleurs = ['#93d0a4', '#93bce0', '#e8c874', '#e8927d', '#c9a4e8', '#f2a33c'];
+    const nb = 60;
     for (let i = 0; i < nb; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const distance = 60 + Math.random() * 110;
+      const x = Math.cos(angle) * distance;
+      const y = Math.sin(angle) * distance;
       const piece = document.createElement('span');
       piece.className = 'confetti-piece';
       piece.style.setProperty('--couleur', couleurs[i % couleurs.length]);
-      piece.style.setProperty('--x', `${(Math.random() * 2 - 1) * 100}px`);
+      piece.style.setProperty('--x', `${x}px`);
+      piece.style.setProperty('--y', `${y}px`);
       piece.style.setProperty('--rotation', `${Math.random() * 360}deg`);
-      piece.style.setProperty('--delai', `${Math.random() * 0.15}s`);
-      piece.style.left = `${40 + Math.random() * 20}%`;
+      piece.style.setProperty('--delai', `${Math.random() * 0.06}s`);
       this.confettiConteneur.appendChild(piece);
     }
     window.clearTimeout(this._confettiTimeout);
     this._confettiTimeout = window.setTimeout(() => {
       if (this.confettiConteneur) this.confettiConteneur.innerHTML = '';
-    }, 1300);
+    }, 900);
   }
 };

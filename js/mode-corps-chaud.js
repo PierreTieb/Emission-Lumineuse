@@ -12,6 +12,8 @@ const ModeCorpsChaud = {
     this.lectureTemperature = document.getElementById('lecture-temperature');
     this.lectureCouleur = document.getElementById('lecture-couleur');
     this.lecturePic = document.getElementById('lecture-pic');
+    this.lectureDomaine = document.getElementById('lecture-domaine');
+    this.lectureComparaison = document.getElementById('lecture-comparaison');
     this.canvas = document.getElementById('canvas-spectre-corps');
 
     this.curseur.addEventListener('input', () => this.mettreAJour());
@@ -35,6 +37,8 @@ const ModeCorpsChaud = {
       : pic > 780
         ? `${pic.toFixed(0)} nm (infrarouge, hors du visible)`
         : `${pic.toFixed(0)} nm`;
+    this.lectureDomaine.textContent = PhysiqueCorpsChaud.domainePic(T);
+    this.lectureComparaison.textContent = PhysiqueCorpsChaud.comparaisonObjet(T);
 
     this._dessinerSpectre(T);
   },

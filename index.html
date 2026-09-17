@@ -118,10 +118,30 @@
               <span class="lecture-label">Pic d'émission (loi de Wien)</span>
               <span id="lecture-pic" class="lecture-valeur">...</span>
             </div>
+            <div class="lecture-ligne">
+              <span class="lecture-label">Domaine du pic</span>
+              <span id="lecture-domaine" class="lecture-valeur">...</span>
+            </div>
+            <div class="lecture-ligne">
+              <span class="lecture-label">Comparable à</span>
+              <span id="lecture-comparaison" class="lecture-valeur">...</span>
+            </div>
           </div>
           <input type="range" id="curseur-temperature" min="1000" max="20000" step="50" value="3000" aria-label="Température du corps en kelvins">
           <div class="curseur-graduations">
             <span>1000 K</span><span>5800 K (Soleil)</span><span>20000 K</span>
+          </div>
+
+          <div class="encart-loi-wien">
+            <h3>La loi de déplacement de Wien</h3>
+            <p class="formule-wien">λ<sub>max</sub> = b / T</p>
+            <p>
+              Plus un corps est chaud, plus son pic d'émission se déplace vers les courtes longueurs
+              d'onde (vers le bleu). <strong>b</strong> est la constante de Wien
+              (b ≈ 2,898 × 10⁻³ m·K) et <strong>T</strong> la température en kelvins.
+              C'est cette loi qui permet, par exemple, d'estimer la température de surface d'une
+              étoile rien qu'à partir de sa couleur.
+            </p>
           </div>
         </div>
 
@@ -166,13 +186,12 @@
           </div>
           <canvas id="canvas-banc-raies" width="820" height="360"></canvas>
           <p class="aide-glisser aide-mobile">Astuce : le gaz se dépose dans l'encoche prévue sur le trajet du faisceau.</p>
+          <div class="barre-actions barre-actions-schema">
+            <button id="btn-vider-raies" class="btn-secondaire">Vider</button>
+            <button id="btn-afficher-spectre-raies" class="btn-principal" disabled>Afficher le spectre</button>
+          </div>
         </div>
 
-      </div>
-
-      <div class="barre-actions">
-        <button id="btn-vider-raies" class="btn-secondaire">Vider</button>
-        <button id="btn-afficher-spectre-raies" class="btn-principal" disabled>Afficher le spectre</button>
       </div>
 
     </section>
@@ -190,20 +209,16 @@
       <div class="banc-optique-conteneur banc-grand-format">
         <div id="interrupteur-source-id" class="interrupteur-source hidden">
           <span>Source blanche</span>
-          <button id="btn-interrupteur-id" class="interrupteur" aria-pressed="true">
+          <button id="btn-interrupteur-id" class="interrupteur" aria-pressed="false">
             <span class="interrupteur-bille"></span>
           </button>
         </div>
         <canvas id="canvas-banc-identification" width="960" height="500"></canvas>
       </div>
 
-      <div class="barre-actions">
-        <button id="btn-identifier" class="btn-principal" disabled>Identifier</button>
-      </div>
-
-      <div id="zone-identification" class="zone-identification hidden">
+      <div id="zone-identification" class="zone-identification">
         <h3 id="titre-identification">Quel gaz reconnais-tu ?</h3>
-        <p class="aide-glisser">Clique sur un ou plusieurs flacons pour construire ta réponse, en comparant avec ce qui apparaît sur l'écran du schéma ci-dessus.</p>
+        <p class="aide-glisser" id="aide-identification">Sélectionne le gaz qui correspond à ce spectre, en comparant avec ce qui apparaît sur l'écran du schéma ci-dessus.</p>
 
         <div class="comparaison-spectres">
           <div class="comparaison-ligne">

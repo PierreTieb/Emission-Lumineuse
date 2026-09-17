@@ -245,9 +245,11 @@ const SceneOptique = {
   },
 
   _dessinerZoneDepot(ctx, x, y, survole, largeurCanvas) {
-    const largeurZone = Math.min(150, largeurCanvas * 0.4);
-    const hauteurZone = Math.min(92, largeurCanvas * 0.26);
-    const rayon = Math.min(18, hauteurZone * 0.22);
+    // Facteurs choisis pour rester toujours nettement en retrait de la fente
+    // et du prisme, même sur le canvas le plus étroit (mobile en portrait).
+    const largeurZone = Math.min(110, largeurCanvas * 0.22);
+    const hauteurZone = Math.min(70, largeurCanvas * 0.16);
+    const rayon = Math.min(16, hauteurZone * 0.25);
     // On garde le centre demandé, mais on s'assure que le rectangle reste
     // entièrement dans le canvas (jamais tronqué sur les bords, même quand
     // la source est proche du bord gauche sur un canvas très étroit).
@@ -272,7 +274,7 @@ const SceneOptique = {
 
   /** Dessine un ou plusieurs tubes de gaz émetteurs, groupés en grappe serrée. */
   _dessinerTubesGaz(ctx, x, y, gazListe, inconnu, zonesGaz, echelle = 1) {
-    const e = Math.max(0.55, echelle);
+    const e = Math.max(0.4, echelle);
     const n = gazListe.length;
     const espace = 22 * e;
     const xDepart = x - ((n - 1) * espace) / 2;
@@ -286,7 +288,7 @@ const SceneOptique = {
 
   /** Dessine une ou plusieurs cuves de gaz absorbant, groupées en grappe serrée. */
   _dessinerCuvesGaz(ctx, x, y, gazListe, inconnu, zonesGaz, echelle = 1) {
-    const e = Math.max(0.55, echelle);
+    const e = Math.max(0.4, echelle);
     const n = gazListe.length;
     const espace = 20 * e;
     const xDepart = x - ((n - 1) * espace) / 2;

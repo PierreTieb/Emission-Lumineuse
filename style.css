@@ -262,31 +262,6 @@ button { font-family: inherit; font-weight: 600; }
   margin-top: 6px;
 }
 
-.encart-loi-wien {
-  margin-top: 22px;
-  padding-top: 18px;
-  border-top: 1px solid var(--ligne);
-}
-.encart-loi-wien h3 {
-  font-size: 0.95rem;
-  color: var(--jaune);
-  margin-bottom: 8px;
-}
-.encart-loi-wien p {
-  font-size: 0.85rem;
-  line-height: 1.55;
-  color: var(--encre-douce);
-  margin: 0 0 8px;
-}
-.encart-loi-wien p:last-child { margin-bottom: 0; }
-.formule-wien {
-  font-family: 'Oxanium', ui-rounded, sans-serif;
-  font-size: 1.3rem !important;
-  font-weight: 700;
-  color: var(--encre) !important;
-  letter-spacing: 0.02em;
-}
-
 .panneau-spectre h3 { font-size: 1rem; margin-bottom: 14px; color: var(--encre); }
 #canvas-spectre-corps {
   width: 100%;
@@ -434,6 +409,44 @@ body.glisser-actif { touch-action: none; user-select: none; overscroll-behavior:
 .bouteille.selectionnee .bouteille-nom { color: var(--encre); }
 .bouteille:disabled { opacity: 0.35; cursor: default; }
 
+/* Mode "Identifier un gaz" : 10 flacons à choisir, on les réduit pour que
+   le bouton Valider et le résultat restent visibles sans trop défiler. */
+.liste-bouteilles-choix .bouteille {
+  width: 48px;
+  gap: 3px;
+  padding: 4px 2px;
+}
+.liste-bouteilles-choix .bouteille-corps {
+  width: 22px; height: 34px;
+  border-radius: 6px 6px 9px 9px;
+  padding: 3px;
+}
+.liste-bouteilles-choix .bouteille-corps::before {
+  width: 7px; height: 5px;
+  top: -5px;
+}
+.liste-bouteilles-choix .bouteille-nom { font-size: 0.6rem; }
+
+/* Sur mobile, la bibliothèque du mode "Spectre de raies" passe au-dessus
+   du schéma : on la réduit pour laisser plus de hauteur au schéma. */
+@media (max-width: 860px) {
+  #liste-bouteilles-raies .bouteille {
+    width: 50px;
+    gap: 3px;
+    padding: 4px 2px;
+  }
+  #liste-bouteilles-raies .bouteille-corps {
+    width: 24px; height: 36px;
+    border-radius: 6px 6px 9px 9px;
+    padding: 3px;
+  }
+  #liste-bouteilles-raies .bouteille-corps::before {
+    width: 8px; height: 6px;
+    top: -5px;
+  }
+  #liste-bouteilles-raies .bouteille-nom { font-size: 0.62rem; }
+}
+
 /* ---- Comparaison des spectres (mode identification) ---- */
 .comparaison-spectres {
   display: flex;
@@ -443,19 +456,20 @@ body.glisser-actif { touch-action: none; user-select: none; overscroll-behavior:
 }
 .comparaison-ligne {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 14px;
+  gap: 6px;
 }
 .comparaison-label {
-  width: 96px;
-  flex-shrink: 0;
-  font-size: 0.82rem;
+  font-size: 0.85rem;
+  font-weight: 600;
   color: var(--encre-douce);
-  text-align: right;
+  text-align: center;
 }
 .comparaison-ligne canvas {
-  flex: 1;
   width: 100%;
+  min-width: 0; /* sans ça, un canvas garde sa largeur HTML intrinsèque et déborde */
+  max-width: 100%;
   height: 46px;
   background: #0e0e10;
   border-radius: 8px;
@@ -493,12 +507,10 @@ body.glisser-actif { touch-action: none; user-select: none; overscroll-behavior:
 .banc-grand-format { max-width: 100%; }
 
 .interrupteur-source {
-  position: absolute;
-  top: 28px; left: 28px;
   display: flex; align-items: center; gap: 8px;
-  font-size: 0.78rem;
+  font-size: 0.85rem;
   color: var(--encre-douce);
-  z-index: 2;
+  margin-bottom: 12px;
 }
 .interrupteur-source.hidden { display: none; }
 .interrupteur {

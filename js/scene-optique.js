@@ -167,9 +167,12 @@ const SceneOptique = {
     const zonesGaz = [];
 
     // ---- Zones de dépôt (halo pointillé, forme allongée) ----
-    this._dessinerZoneDepot(ctx, xSource, yMid, state.survolZone === 'source' && state.type === 'emission', largeur);
-    if (state.type === 'absorption') {
-      this._dessinerZoneDepot(ctx, xAbsorption, yMid, state.survolZone === 'absorption', largeur);
+    // Inutile en mode Identification (state.inconnu) : rien ne s'y dépose.
+    if (!state.inconnu) {
+      this._dessinerZoneDepot(ctx, xSource, yMid, state.survolZone === 'source' && state.type === 'emission', largeur);
+      if (state.type === 'absorption') {
+        this._dessinerZoneDepot(ctx, xAbsorption, yMid, state.survolZone === 'absorption', largeur);
+      }
     }
 
     // ---- Source ----

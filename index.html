@@ -111,18 +111,6 @@
               <span id="lecture-temperature" class="lecture-valeur">...</span>
             </div>
             <div class="lecture-ligne">
-              <span class="lecture-label">Couleur perçue</span>
-              <span id="lecture-couleur" class="lecture-valeur">...</span>
-            </div>
-            <div class="lecture-ligne">
-              <span class="lecture-label">Pic d'émission (loi de Wien)</span>
-              <span id="lecture-pic" class="lecture-valeur">...</span>
-            </div>
-            <div class="lecture-ligne">
-              <span class="lecture-label">Domaine du pic</span>
-              <span id="lecture-domaine" class="lecture-valeur">...</span>
-            </div>
-            <div class="lecture-ligne">
               <span class="lecture-label">Comparable à</span>
               <span id="lecture-comparaison" class="lecture-valeur">...</span>
             </div>
@@ -130,18 +118,6 @@
           <input type="range" id="curseur-temperature" min="1000" max="20000" step="50" value="3000" aria-label="Température du corps en kelvins">
           <div class="curseur-graduations">
             <span>1000 K</span><span>5800 K (Soleil)</span><span>20000 K</span>
-          </div>
-
-          <div class="encart-loi-wien">
-            <h3>La loi de déplacement de Wien</h3>
-            <p class="formule-wien">λ<sub>max</sub> = b / T</p>
-            <p>
-              Plus un corps est chaud, plus son pic d'émission se déplace vers les courtes longueurs
-              d'onde (vers le bleu). <strong>b</strong> est la constante de Wien
-              (b ≈ 2,898 × 10⁻³ m·K) et <strong>T</strong> la température en kelvins.
-              C'est cette loi qui permet, par exemple, d'estimer la température de surface d'une
-              étoile rien qu'à partir de sa couleur.
-            </p>
           </div>
         </div>
 
@@ -155,6 +131,7 @@
             La hauteur de la courbe est normalisée à son propre maximum pour chaque température :
             on visualise ainsi la <em>forme</em> du spectre (quelles couleurs dominent), pas la puissance
             totale émise, qui varie de plusieurs ordres de grandeur avec la température (loi de Stefan-Boltzmann).
+            Le trait vertical suit le pic d'émission (loi de Wien) et indique sa longueur d'onde.
           </p>
         </div>
 

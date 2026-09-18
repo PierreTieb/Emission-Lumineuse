@@ -21,7 +21,6 @@ const Navigation = {
 
   init() {
     this.titreEcran = document.getElementById('titre-ecran');
-    this.entete = document.getElementById('entete');
     this.btnRetour = document.getElementById('btn-retour');
 
     document.querySelectorAll('.carte-mode').forEach(carte => {
@@ -40,11 +39,10 @@ const Navigation = {
     this.titreEcran.textContent = TITRES[cle];
     this.btnRetour.classList.toggle('hidden', cle === 'accueil');
 
-    // Le titre vit dans l'en-tête, en dehors des sections de mode : il faut
-    // lui appliquer la classe de couleur/taille directement sur l'en-tête
-    // (ancêtre commun), sinon aucun sélecteur CSS ne peut l'atteindre.
-    Object.values(CLASSES_MODE).forEach(c => this.entete.classList.remove(c));
-    if (CLASSES_MODE[cle]) this.entete.classList.add(CLASSES_MODE[cle]);
+    // Le corps de la page porte la classe de mode : elle sert à la fois au
+    // titre (couleur) et au fond d'écran (halo de nébuleuse teinté).
+    Object.values(CLASSES_MODE).forEach(c => document.body.classList.remove(c));
+    if (CLASSES_MODE[cle]) document.body.classList.add(CLASSES_MODE[cle]);
 
     this.ecranActuel = cle;
 
